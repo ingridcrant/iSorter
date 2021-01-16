@@ -1,25 +1,318 @@
-import logo from './logo.svg';
-import './App.css';
+import React, {Component} from 'react';
+import PropTypes from 'prop-types';
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
-}
+import styled from 'styled-components';
+import logo from './images/iSorterlogo.png';
+import smalllogo from './images/smalliSorterlogo.png';
+import signInWithApple from './images/sign_in_with_apple_button.png';
+import { developerToken } from './configure.js';
+import { createGlobalStyle } from "styled-components";
+import CheckboxContainer from './CheckBox.js';
+
+const GlobalStyles = createGlobalStyle`
+  @import url('https://fonts.googleapis.com/css2?family=Montserrat&family=Roboto&display=swap');
+  body {
+    font-family: 'Montserrat', sans-serif;
+  }
+`
+const SignInButton = styled.button`
+  background: transparent;
+  border: transparent;
+
+`;
+const Button = styled.button`
+  font-family: 'Montserrat', sans-serif;
+  background: white;
+  border-radius: 3px;
+  border: 3px solid #00b1cc;
+  background-color: #121640;
+  color: #ee3ec9;
+  margin-top: 40px;
+  margin-bottom: 40px;
+  padding: 0.25em 1em;
+  font-size: 20px;
+  border-radius: 8px;
+`;
+const SmallText = styled.h1`
+  font-size: 20px;
+  text-align: center;
+  color: #e43397;
+`;
+const Logo = styled.img`
+  width: 460px;
+  height: 329px;
+  margin-top: 40px;
+  margin-bottom: 60px;
+`;
+const SmallLogo = styled.img`
+  width: 400px;
+  height: 160px;
+  margin-top: 40px;
+  margin-bottom: 50px;
+`;
+const HomeStyles = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #121640;
+  ${Button}:hover {
+    background-color: #1b215f;
+  }
+  ....
+`;
+const HomeStylesLeftAlign = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  color: #ff0080;
+`;
+
+class App extends Component {
+  constructor() {
+    super();
+    this.state = {selectedOption: "Genre", playlistsInfo: null, selectedPlaylists: null, music: null, userToken: null, isAuthorized: false, creatingPlaylists: false, isCompleted: false};
+    this.onValueChange = this.onValueChange.bind(this);
+    this.formSubmit = this.formSubmit.bind(this);
+  }
+
+  componentDidMount() {
+    
+    const music = window.MusicKit.configure({
+      developerToken: developerToken,
+      app: {
+        name: 'iSorter',
+        build: '1'
+      }
+    });
+    this.setState({music: music, isAuthorized: music.isAuthorized});
+  }
+
+  onValueChange(event) {
+    this.setState({
+      selectedOption: event.target.value
+    });
+  }
+
+  formSubmit(event) {
+    event.preventDefault();
+    this.setState({creatingPlaylists: true});
+    if(this.state.selectedOption === "Genre") {
+      this.fetchGenreSortedPlaylists();
+    }
+    else if (this.state.selectedOption === "Artist") {
+      this.fetchArtistSortedPlaylists();
+    }
+    else if (this.state.selectedOption === "Release Year") {
+      this.fetchReleaseDateSortedPlaylists();
+    }
+  }
+
+  fetchGenreSortedPlaylists() {
+    const userToken = this.state.userToken;
+
+    fetch('/create_playlist_by_genre', {
+      // Declare what type of data we're sending
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      // Specify the method
+      method: 'POST',
+      // Send the user token
+      body: JSON.stringify({userToken})
+    }).then(res => res.json()).then(data => {
+      var tempPlaylistsInfo = [];
+      Object.keys(data).forEach(function(playlist) {
+        var playlistInfo = {};
+        playlistInfo.name = playlist
+        playlistInfo.length = data[playlist].relationships.tracks.data.length;
+        playlistInfo.data = data[playlist];
+        tempPlaylistsInfo.push(playlistInfo);
+      });
+      this.setState({playlistsInfo: tempPlaylistsInfo, isCompleted: true});
+    });
+  }
+  
+  fetchReleaseDateSortedPlaylists() {
+    const userToken = this.state.userToken;
+
+    fetch('/create_playlist_by_release_date', {
+      // Declare what type of data we're sending
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      // Specify the method
+      method: 'POST',
+      // Send the user token
+      body: JSON.stringify({userToken})
+    }).then(res => res.json()).then(data => {
+      var tempPlaylistsInfo = [];
+      Object.keys(data).forEach(function(playlist) {
+        var playlistInfo = {};
+        playlistInfo.name = playlist
+        playlistInfo.length = data[playlist].relationships.tracks.data.length;
+        playlistInfo.data = data[playlist];
+        tempPlaylistsInfo.push(playlistInfo);
+      });
+      this.setState({playlistsInfo: tempPlaylistsInfo, isCompleted: true});
+    });
+  }
+
+  fetchArtistSortedPlaylists() {
+    const userToken = this.state.userToken;
+
+    fetch('/create_playlist_by_artist', {
+      // Declare what type of data we're sending
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      // Specify the method
+      method: 'POST',
+      // Send the user token
+      body: JSON.stringify({userToken})
+    }).then(res => res.json()).then(data => {
+      var tempPlaylistsInfo = [];
+      Object.keys(data).forEach(function(playlist) {
+        var playlistInfo = {};
+        playlistInfo.name = playlist
+        playlistInfo.length = data[playlist].relationships.tracks.data.length;
+        playlistInfo.data = data[playlist];
+        tempPlaylistsInfo.push(playlistInfo);
+      });
+      this.setState({playlistsInfo: tempPlaylistsInfo, isCompleted: true});
+    });
+  }
+
+  render() {
+    return (
+      <HomeStyles>
+        <GlobalStyles/>
+        {this.state.music && this.state.music.isAuthorized && this.state.creatingPlaylists && !this.state.isCompleted && (
+            <HomeStyles>
+              <SmallLogo src={smalllogo} />
+              <p class="loading">Sorting into playlists</p>
+            </HomeStyles>
+          )}
+          {this.state.music && !this.state.music.isAuthorized && (
+            <HomeStyles>
+              <Logo src={logo} />
+              <SignInButton>
+                <img src={signInWithApple} width="248" height="47" onClick={
+                () => this.state.music.authorize().then(
+                  musicUserToken => {
+                    this.setState({userToken: musicUserToken});
+                  })
+              }/>
+              </SignInButton>
+            </HomeStyles>
+          )}
+          {this.state.music && this.state.music.isAuthorized && !this.state.creatingPlaylists && (
+            <HomeStyles>
+              <Logo src={logo} />
+                <HomeStylesLeftAlign>
+                <Item>
+                  <RadioButton
+                    type="radio"
+                    name="radio"
+                    value="Genre"
+                    checked={this.state.selectedOption === "Genre"}
+                    onChange={this.onValueChange}
+                  />
+                  <RadioButtonLabel />
+                  <SmallText>Sort by Genre</SmallText>
+                </Item>
+                <Item>
+                  <RadioButton
+                    type="radio"
+                    name="radio"
+                    value="Artist"
+                    checked={this.state.selectedOption === "Artist"}
+                    onChange={this.onValueChange}
+                  />
+                  <RadioButtonLabel />
+                  <SmallText>Sort by Artist</SmallText>
+                </Item>
+                <Item>
+                  <RadioButton
+                    type="radio"
+                    name="radio"
+                    value="Release Year"
+                    checked={this.state.selectedOption === "Release Year"}
+                    onChange={this.onValueChange}
+                  />
+                  <RadioButtonLabel />
+                  <SmallText>Sort by Release Year</SmallText>
+                </Item>
+              </HomeStylesLeftAlign>
+              <Button onClick={this.formSubmit}>
+                <strong>Sort Library</strong>
+              </Button>
+            </HomeStyles>
+          )}
+          {this.state.music && this.state.music.isAuthorized && this.state.creatingPlaylists && this.state.isCompleted && (
+            <div>
+              <SmallLogo src={smalllogo} />
+              <CheckboxContainer checkboxes={this.state.playlistsInfo} userToken={this.state.userToken}/>
+            </div>
+          )}
+      </HomeStyles>
+    )
+  }
+};
+
+const Item = styled.div`
+  display: flex;
+  align-items: center;
+  height: 48px;
+  position: relative;
+`;
+const RadioButtonLabel = styled.label`
+  position: absolute;
+  top: 25%;
+  left: 4px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: white;
+  border: 1px solid #bebebe;
+`;
+const RadioButton = styled.input`
+  opacity: 0;
+  z-index: 1;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  margin-right: 10px;
+  &:hover ~ ${RadioButtonLabel} {
+    background: #bebebe;
+    &::after {
+      content: "";
+      display: block;
+      border-radius: 50%;
+      width: 12px;
+      height: 12px;
+      margin: 6px;
+      background: #eeeeee;
+    }
+  }
+  ${(props) =>
+    props.checked &&
+    ` 
+    &:checked + ${RadioButtonLabel} {
+      background: #cb88ff;
+      border: 1px solid #cb88ff;
+      &::after {
+        content: "";
+        display: block;
+        border-radius: 50%;
+        width: 12px;
+        height: 12px;
+        margin: 6px;
+        box-shadow: 1px 3px 3px 1px rgba(0, 0, 0, 0.1);
+        background: white;
+      }
+    }
+  `}
+`;
 
 export default App;
