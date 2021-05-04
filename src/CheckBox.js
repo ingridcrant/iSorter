@@ -56,13 +56,18 @@ class CheckboxContainer extends React.Component {
         this.state = {
             checkedItems: new Map(),
             pressed: false,
-            successful: false
+            finished: false
         }
         
         this.handleChange = this.handleChange.bind(this);
         this.postPlaylists = this.postPlaylists.bind(this);
+        this.finishCheckbox = this.finishCheckbox.bind(this);
     }
     
+    finishCheckbox() {
+        this.props.onSubmit();
+    }
+
     postPlaylists() {
         this.setState({pressed: true});
     
@@ -98,7 +103,8 @@ class CheckboxContainer extends React.Component {
             console.log('POST response: ');
             // Should be 'OK' if everything was successful
             console.log(text);
-            this.setState({successful: true});
+            this.setState({finished: true});
+            this.finishCheckbox();
         }.bind(this));
     }
   
@@ -111,7 +117,7 @@ class CheckboxContainer extends React.Component {
     render() {
         return (
             <div>
-            {!this.state.pressed && !this.state.successful && (
+            {!this.state.pressed && (
             <React.Fragment>
                 <HomeStyles>
                     <HomeStylesLeftAlign>
@@ -130,11 +136,8 @@ class CheckboxContainer extends React.Component {
                 </HomeStyles>
             </React.Fragment>
             )}
-            {this.state.pressed && !this.state.successful && (
+            {this.state.pressed && (
                 <p class="loading">Creating playlists</p>
-            )}
-            {this.state.successful && (
-                <p>Success!</p>
             )}
         </div>
         );

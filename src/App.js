@@ -81,10 +81,13 @@ class App extends Component {
       userToken: null,
       isAuthorized: false,
       creatingPlaylists: false,
+      isDisplaying: false,
       isCompleted: false};
 
     this.onValueChange = this.onValueChange.bind(this);
     this.formSubmit = this.formSubmit.bind(this);
+    this.onCheckboxSubmit = this.onCheckboxSubmit.bind(this);
+    this.resort = this.resort.bind(this);
   }
 
   componentDidMount() {
@@ -119,6 +122,14 @@ class App extends Component {
     }
   }
 
+  resort(event) {
+    this.setState({creatingPlaylists: false, isDisplaying: false, isCompleted: false});
+  }
+
+  onCheckboxSubmit() {
+    this.setState({isCompleted: true});
+  }
+
   fetchGenreSortedPlaylists() {
     const userToken = this.state.userToken;
 
@@ -138,7 +149,7 @@ class App extends Component {
         playlistInfo.data = data[playlist];
         tempPlaylistsInfo.push(playlistInfo);
       });
-      this.setState({playlistsInfo: tempPlaylistsInfo, isCompleted: true});
+      this.setState({playlistsInfo: tempPlaylistsInfo, isDisplaying: true});
     });
   }
   
@@ -161,7 +172,7 @@ class App extends Component {
         playlistInfo.data = data[playlist];
         tempPlaylistsInfo.push(playlistInfo);
       });
-      this.setState({playlistsInfo: tempPlaylistsInfo, isCompleted: true});
+      this.setState({playlistsInfo: tempPlaylistsInfo, isDisplaying: true});
     });
   }
 
@@ -184,7 +195,7 @@ class App extends Component {
         playlistInfo.data = data[playlist];
         tempPlaylistsInfo.push(playlistInfo);
       });
-      this.setState({playlistsInfo: tempPlaylistsInfo, isCompleted: true});
+      this.setState({playlistsInfo: tempPlaylistsInfo, isDisplaying: true});
     });
   }
 
@@ -213,16 +224,16 @@ class App extends Component {
     )
   }
 
-  renderCompleted() {
+  renderChecklist() {
     return (
       <div>
         <SmallLogo src={smalllogo} />
-        <CheckboxContainer checkboxes={this.state.playlistsInfo} userToken={this.state.userToken}/>
+        <CheckboxContainer checkboxes={this.state.playlistsInfo} userToken={this.state.userToken} onSubmit={this.onCheckboxSubmit}/>
       </div>
     )
   }
 
-  renderCreating() {
+  renderCreate() {
     return (
       <HomeStyles>
         <Logo src={logo} />
@@ -268,20 +279,35 @@ class App extends Component {
     )
   }
 
+  renderCompleted() {
+    return (
+      <HomeStyles>
+        <SmallLogo src={smalllogo} />
+        <p>Done!</p>
+        <Button onClick={this.resort}>
+          <strong>Resort</strong>
+        </Button>
+      </HomeStyles>
+    )
+  }
+
   render() {
     return (
       <HomeStyles>
         <GlobalStyles/>
-        {this.state.music && this.state.music.isAuthorized && this.state.creatingPlaylists && !this.state.isCompleted && (
+        {this.state.music && this.state.music.isAuthorized && this.state.creatingPlaylists && !this.state.isDisplaying && (
           this.renderSorting()
         )}
         {this.state.music && !this.state.music.isAuthorized && (
           this.renderAuthorization()
         )}
         {this.state.music && this.state.music.isAuthorized && !this.state.creatingPlaylists && (
-          this.renderCreating()
+          this.renderCreate()
         )}
-        {this.state.music && this.state.music.isAuthorized && this.state.creatingPlaylists && this.state.isCompleted && (
+        {this.state.music && this.state.music.isAuthorized && this.state.creatingPlaylists && this.state.isDisplaying && !this.state.isCompleted && (
+          this.renderChecklist()
+        )}
+        {this.state.isCompleted && (
           this.renderCompleted()
         )}
       </HomeStyles>
