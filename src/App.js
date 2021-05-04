@@ -9,16 +9,18 @@ import { developerToken } from './configure.js';
 import { createGlobalStyle } from "styled-components";
 import CheckboxContainer from './CheckBox.js';
 
+// import Montserrat font
 const GlobalStyles = createGlobalStyle`
   @import url('https://fonts.googleapis.com/css2?family=Montserrat&family=Roboto&display=swap');
   body {
     font-family: 'Montserrat', sans-serif;
   }
 `
+
+// sign in with apple button (image is put over it)
 const SignInButton = styled.button`
   background: transparent;
   border: transparent;
-
 `;
 const Button = styled.button`
   font-family: 'Montserrat', sans-serif;
@@ -71,7 +73,16 @@ const HomeStylesLeftAlign = styled.div`
 class App extends Component {
   constructor() {
     super();
-    this.state = {selectedOption: "Genre", playlistsInfo: null, selectedPlaylists: null, music: null, userToken: null, isAuthorized: false, creatingPlaylists: false, isCompleted: false};
+    this.state = {
+      selectedOption: "Genre",  // keeps track of sorting option selected
+      playlistsInfo: null,      // keeps track of json of playlists
+      selectedPlaylists: null,  
+      music: null,
+      userToken: null,
+      isAuthorized: false,
+      creatingPlaylists: false,
+      isCompleted: false};
+
     this.onValueChange = this.onValueChange.bind(this);
     this.formSubmit = this.formSubmit.bind(this);
   }
@@ -112,15 +123,13 @@ class App extends Component {
     const userToken = this.state.userToken;
 
     fetch('/create_playlist_by_genre', {
-      // Declare what type of data we're sending
       headers: {
         'Content-Type': 'application/json'
       },
-      // Specify the method
       method: 'POST',
-      // Send the user token
       body: JSON.stringify({userToken})
     }).then(res => res.json()).then(data => {
+      // update the playlistsInfo with the genre playlists
       var tempPlaylistsInfo = [];
       Object.keys(data).forEach(function(playlist) {
         var playlistInfo = {};
@@ -137,15 +146,13 @@ class App extends Component {
     const userToken = this.state.userToken;
 
     fetch('/create_playlist_by_release_date', {
-      // Declare what type of data we're sending
       headers: {
         'Content-Type': 'application/json'
       },
-      // Specify the method
       method: 'POST',
-      // Send the user token
       body: JSON.stringify({userToken})
     }).then(res => res.json()).then(data => {
+      // update the playlistsInfo with the release date playlists
       var tempPlaylistsInfo = [];
       Object.keys(data).forEach(function(playlist) {
         var playlistInfo = {};
@@ -162,15 +169,13 @@ class App extends Component {
     const userToken = this.state.userToken;
 
     fetch('/create_playlist_by_artist', {
-      // Declare what type of data we're sending
       headers: {
         'Content-Type': 'application/json'
       },
-      // Specify the method
       method: 'POST',
-      // Send the user token
       body: JSON.stringify({userToken})
     }).then(res => res.json()).then(data => {
+      // update the playlistsInfo with the artist playlists
       var tempPlaylistsInfo = [];
       Object.keys(data).forEach(function(playlist) {
         var playlistInfo = {};
@@ -183,78 +188,102 @@ class App extends Component {
     });
   }
 
+  renderSorting() {
+    return (
+      <HomeStyles>
+        <SmallLogo src={smalllogo} />
+        <p class="loading">Sorting into playlists</p>
+      </HomeStyles>
+    )
+  }
+
+  renderAuthorization() {
+    return (
+      <HomeStyles>
+        <Logo src={logo} />
+        <SignInButton>
+          <img src={signInWithApple} width="248" height="47" onClick={
+          () => this.state.music.authorize().then(
+            musicUserToken => {
+              this.setState({userToken: musicUserToken});
+            })
+        }/>
+        </SignInButton>
+      </HomeStyles>
+    )
+  }
+
+  renderCompleted() {
+    return (
+      <div>
+        <SmallLogo src={smalllogo} />
+        <CheckboxContainer checkboxes={this.state.playlistsInfo} userToken={this.state.userToken}/>
+      </div>
+    )
+  }
+
+  renderCreating() {
+    return (
+      <HomeStyles>
+        <Logo src={logo} />
+          <HomeStylesLeftAlign>
+          <Item>
+            <RadioButton
+              type="radio"
+              name="radio"
+              value="Genre"
+              checked={this.state.selectedOption === "Genre"}
+              onChange={this.onValueChange}
+            />
+            <RadioButtonLabel />
+            <SmallText>Sort by Genre</SmallText>
+          </Item>
+          <Item>
+            <RadioButton
+              type="radio"
+              name="radio"
+              value="Artist"
+              checked={this.state.selectedOption === "Artist"}
+              onChange={this.onValueChange}
+            />
+            <RadioButtonLabel />
+            <SmallText>Sort by Artist</SmallText>
+          </Item>
+          <Item>
+            <RadioButton
+              type="radio"
+              name="radio"
+              value="Release Year"
+              checked={this.state.selectedOption === "Release Year"}
+              onChange={this.onValueChange}
+            />
+            <RadioButtonLabel />
+            <SmallText>Sort by Release Year</SmallText>
+          </Item>
+        </HomeStylesLeftAlign>
+        <Button onClick={this.formSubmit}>
+          <strong>Sort Library</strong>
+        </Button>
+      </HomeStyles>
+    )
+  }
+
   render() {
     return (
       <HomeStyles>
         <GlobalStyles/>
         {this.state.music && this.state.music.isAuthorized && this.state.creatingPlaylists && !this.state.isCompleted && (
-            <HomeStyles>
-              <SmallLogo src={smalllogo} />
-              <p class="loading">Sorting into playlists</p>
-            </HomeStyles>
-          )}
-          {this.state.music && !this.state.music.isAuthorized && (
-            <HomeStyles>
-              <Logo src={logo} />
-              <SignInButton>
-                <img src={signInWithApple} width="248" height="47" onClick={
-                () => this.state.music.authorize().then(
-                  musicUserToken => {
-                    this.setState({userToken: musicUserToken});
-                  })
-              }/>
-              </SignInButton>
-            </HomeStyles>
-          )}
-          {this.state.music && this.state.music.isAuthorized && !this.state.creatingPlaylists && (
-            <HomeStyles>
-              <Logo src={logo} />
-                <HomeStylesLeftAlign>
-                <Item>
-                  <RadioButton
-                    type="radio"
-                    name="radio"
-                    value="Genre"
-                    checked={this.state.selectedOption === "Genre"}
-                    onChange={this.onValueChange}
-                  />
-                  <RadioButtonLabel />
-                  <SmallText>Sort by Genre</SmallText>
-                </Item>
-                <Item>
-                  <RadioButton
-                    type="radio"
-                    name="radio"
-                    value="Artist"
-                    checked={this.state.selectedOption === "Artist"}
-                    onChange={this.onValueChange}
-                  />
-                  <RadioButtonLabel />
-                  <SmallText>Sort by Artist</SmallText>
-                </Item>
-                <Item>
-                  <RadioButton
-                    type="radio"
-                    name="radio"
-                    value="Release Year"
-                    checked={this.state.selectedOption === "Release Year"}
-                    onChange={this.onValueChange}
-                  />
-                  <RadioButtonLabel />
-                  <SmallText>Sort by Release Year</SmallText>
-                </Item>
-              </HomeStylesLeftAlign>
-              <Button onClick={this.formSubmit}>
-                <strong>Sort Library</strong>
-              </Button>
-            </HomeStyles>
-          )}
-          {this.state.music && this.state.music.isAuthorized && this.state.creatingPlaylists && this.state.isCompleted && (
-            <div>
-              <SmallLogo src={smalllogo} />
-              <CheckboxContainer checkboxes={this.state.playlistsInfo} userToken={this.state.userToken}/>
-            </div>
-          )}
+          this.renderSorting()
+        )}
+        {this.state.music && !this.state.music.isAuthorized && (
+          this.renderAuthorization()
+        )}
+        {this.state.music && this.state.music.isAuthorized && !this.state.creatingPlaylists && (
+          this.renderCreating()
+        )}
+        {this.state.music && this.state.music.isAuthorized && this.state.creatingPlaylists && this.state.isCompleted && (
+          this.renderCompleted()
+        )}
       </HomeStyles>
     )
   }
