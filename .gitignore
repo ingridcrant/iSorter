@@ -11,6 +11,10 @@
 # production
 /build
 
+# private tokens
+# /api/configure.py
+# /src/configure.js
+
 # misc
 .DS_Store
 .env.local
