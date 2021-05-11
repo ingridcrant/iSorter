@@ -1,5 +1,4 @@
 import React, {Component} from 'react';
-import PropTypes from 'prop-types';
 
 import styled from 'styled-components';
 import logo from './images/iSorterlogo.png';
@@ -7,7 +6,6 @@ import smalllogo from './images/smalliSorterlogo.png';
 import signInWithApple from './images/sign_in_with_apple_button.png';
 import { developerToken } from './configure.js';
 import { createGlobalStyle } from "styled-components";
-import CheckboxContainer from './CheckBox.js';
 
 // import Montserrat font
 const GlobalStyles = createGlobalStyle`
@@ -41,14 +39,12 @@ const SmallText = styled.h1`
   color: #e43397;
 `;
 const Logo = styled.img`
-  width: 460px;
-  height: 329px;
+  width: 100%;
   margin-top: 40px;
   margin-bottom: 60px;
 `;
 const SmallLogo = styled.img`
-  width: 400px;
-  height: 160px;
+  width: 100%;
   margin-top: 40px;
   margin-bottom: 50px;
 `;
@@ -68,6 +64,66 @@ const HomeStylesLeftAlign = styled.div`
   flex-direction: column;
   justify-content: center;
   color: #ff0080;
+`;
+const CheckboxDivContainer = styled.div`
+  margin-top: 5px;
+  margin-bottom: 5px;
+  margin-right: 50px;
+`;
+
+const Item = styled.div`
+  display: flex;
+  align-items: center;
+  height: 48px;
+  position: relative;
+`;
+const RadioButtonLabel = styled.label`
+  position: absolute;
+  top: 25%;
+  left: 4px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: white;
+  border: 1px solid #bebebe;
+`;
+const RadioButton = styled.input`
+  opacity: 0;
+  z-index: 1;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  margin-right: 10px;
+  &:hover ~ ${RadioButtonLabel} {
+    background: #bebebe;
+    &::after {
+      content: "";
+      display: block;
+      border-radius: 50%;
+      width: 12px;
+      height: 12px;
+      margin: 6px;
+      background: #eeeeee;
+    }
+  }
+  ${(props) =>
+    props.checked &&
+    ` 
+    &:checked + ${RadioButtonLabel} {
+      background: #cb88ff;
+      border: 1px solid #cb88ff;
+      &::after {
+        content: "";
+        display: block;
+        border-radius: 50%;
+        width: 12px;
+        height: 12px;
+        margin: 6px;
+        box-shadow: 1px 3px 3px 1px rgba(0, 0, 0, 0.1);
+        background: white;
+      }
+    }
+  `}
 `;
 
 class App extends Component {
@@ -133,7 +189,7 @@ class App extends Component {
   fetchGenreSortedPlaylists() {
     const userToken = this.state.userToken;
 
-    fetch('/create_playlist_by_genre', {
+    fetch('/api/create_playlist_by_genre', {
       headers: {
         'Content-Type': 'application/json'
       },
@@ -156,7 +212,7 @@ class App extends Component {
   fetchReleaseDateSortedPlaylists() {
     const userToken = this.state.userToken;
 
-    fetch('/create_playlist_by_release_date', {
+    fetch('/api/create_playlist_by_release_date', {
       headers: {
         'Content-Type': 'application/json'
       },
@@ -179,7 +235,7 @@ class App extends Component {
   fetchArtistSortedPlaylists() {
     const userToken = this.state.userToken;
 
-    fetch('/create_playlist_by_artist', {
+    fetch('/api/create_playlist_by_artist', {
       headers: {
         'Content-Type': 'application/json'
       },
@@ -285,7 +341,7 @@ class App extends Component {
         <SmallLogo src={smalllogo} />
         <p>Done!</p>
         <Button onClick={this.resort}>
-          <strong>Resort</strong>
+          <strong>Sort Again</strong>
         </Button>
       </HomeStyles>
     )
@@ -315,59 +371,103 @@ class App extends Component {
   }
 };
 
-const Item = styled.div`
-  display: flex;
-  align-items: center;
-  height: 48px;
-  position: relative;
-`;
-const RadioButtonLabel = styled.label`
-  position: absolute;
-  top: 25%;
-  left: 4px;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: white;
-  border: 1px solid #bebebe;
-`;
-const RadioButton = styled.input`
-  opacity: 0;
-  z-index: 1;
-  border-radius: 50%;
-  width: 24px;
-  height: 24px;
-  margin-right: 10px;
-  &:hover ~ ${RadioButtonLabel} {
-    background: #bebebe;
-    &::after {
-      content: "";
-      display: block;
-      border-radius: 50%;
-      width: 12px;
-      height: 12px;
-      margin: 6px;
-      background: #eeeeee;
-    }
-  }
-  ${(props) =>
-    props.checked &&
-    ` 
-    &:checked + ${RadioButtonLabel} {
-      background: #cb88ff;
-      border: 1px solid #cb88ff;
-      &::after {
-        content: "";
-        display: block;
-        border-radius: 50%;
-        width: 12px;
-        height: 12px;
-        margin: 6px;
-        box-shadow: 1px 3px 3px 1px rgba(0, 0, 0, 0.1);
-        background: white;
+const Checkbox = ({ type = 'checkbox', name, checked, onChange }) => (
+  <input type={type} name={name} checked={checked} onChange={onChange} />
+);
+  
+class CheckboxContainer extends Component {
+  constructor(props) {
+      super(props);
+      
+      this.state = {
+          checkedItems: new Map(),
+          pressed: false,
+          finished: false
       }
-    }
-  `}
-`;
+      
+      this.handleChange = this.handleChange.bind(this);
+      this.postPlaylists = this.postPlaylists.bind(this);
+      this.finishCheckbox = this.finishCheckbox.bind(this);
+  }
+  
+  finishCheckbox() {
+      this.props.onSubmit();
+  }
+
+  postPlaylists() {
+      this.setState({pressed: true});
+  
+      const checkedItems = this.state.checkedItems;
+      const propItems = this.props.checkboxes;
+      var data = {}
+  
+      var checkedPlaylists = {};
+  
+      for (const playlist of Object.entries(propItems)) {
+          if(checkedItems.get(playlist[1].name)){
+              checkedPlaylists[playlist[1].name] = playlist[1].data;
+          }
+      }
+      
+      data.playlists = checkedPlaylists;
+      data.token = this.props.userToken;
+      var string = JSON.stringify(data);
+  
+      // POST
+      fetch('/api/post_playlists', {
+          // Declare what type of data we're sending
+          headers: {
+          'Content-Type': 'application/json'
+          },
+          // Specify the method
+          method: 'POST',
+          // A JSON payload
+          body: string
+      }).then(function (response) { // At this point, Flask has printed our JSON
+          return response.text();
+      }).then(function (text) {
+          console.log('POST response: ');
+          // Should be 'OK' if everything was successful
+          console.log(text);
+          this.setState({finished: true});
+          this.finishCheckbox();
+      }.bind(this));
+  }
+
+  handleChange(e) {
+      const item = e.target.name;
+      const isChecked = e.target.checked;
+      this.setState(prevState => ({ checkedItems: prevState.checkedItems.set(item, isChecked) }));
+  }
+
+  render() {
+      return (
+          <div>
+          {!this.state.pressed && (
+          <React.Fragment>
+              <HomeStyles>
+                  <HomeStylesLeftAlign>
+                      {
+                      this.props.checkboxes.map(item => (
+                          <CheckboxDivContainer key={item.name}>
+                              <Checkbox name={item.name} checked={this.state.checkedItems.get(item.name)} onChange={this.handleChange}/>
+                              <strong>{item.name+": "}</strong>{item.length+" songs"}
+                          </CheckboxDivContainer>
+                      ))
+                      }
+                  </HomeStylesLeftAlign>
+                  <Button onClick={this.postPlaylists}>
+                      Create Playlists
+                  </Button>
+              </HomeStyles>
+          </React.Fragment>
+          )}
+          {this.state.pressed && (
+              <p class="loading">Creating playlists</p>
+          )}
+      </div>
+      );
+  }
+}
 
 export default App;

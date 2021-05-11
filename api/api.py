@@ -1,7 +1,8 @@
-from flask import Flask, jsonify, request
-from pprintpp import pprint
-from configure import DEVELOPER_TOKEN
+from flask import Flask, jsonify, request, send_from_directory
+import pprint
+from .configure import DEVELOPER_TOKEN
 import requests
+import os
 
 BASE_API_URL = "https://api.music.apple.com"
 
@@ -105,9 +106,14 @@ def transform_songs_to_genre_dict(song_data_list, genre_to_songs):
                         }
     return genre_to_songs
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='../build', static_url_path='/')
 
-@app.route('/create_playlist_by_genre', methods=['POST','GET'])
+@app.route('/')
+def index():
+    print(app.static_folder)
+    return app.send_static_file('index.html')
+
+@app.route('/api/create_playlist_by_genre', methods=['POST','GET'])
 def create_playlist_by_genre():
     # gets the user token from the front end
     data = request.json
@@ -144,7 +150,7 @@ def create_playlist_by_genre():
 
     return genre_to_songs
 
-@app.route('/create_playlist_by_release_date', methods=['POST','GET'])
+@app.route('/api/create_playlist_by_release_date', methods=['POST','GET'])
 def create_playlist_by_release_date():
     # gets the user token from the front end
     data = request.json
@@ -181,7 +187,7 @@ def create_playlist_by_release_date():
 
     return release_date_to_songs
 
-@app.route('/create_playlist_by_artist', methods=['POST','GET'])
+@app.route('/api/create_playlist_by_artist', methods=['POST','GET'])
 def create_playlist_by_artist():
     data = request.json
     USER_TOKEN = data['userToken']
@@ -216,7 +222,7 @@ def create_playlist_by_artist():
 
     return artist_to_songs
 
-@app.route('/post_playlists', methods=['POST'])
+@app.route('/api/post_playlists', methods=['POST'])
 def post_playlists():
     # gets user token and selected playlists from the front end
     data = request.json
@@ -233,3 +239,6 @@ def post_playlists():
             return jsonify({"success": False}), create_playlist_request.status_code
     
     return jsonify({"success": True}), 200
+
+if __name__ == "__main__":
+    app.run(host='0.0.0.0', debug=False, port=os.environ.get('PORT', 80))
